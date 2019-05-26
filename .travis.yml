@@ -4,49 +4,32 @@ services:
 
 env:
   global:
-    - COMMIT=${TRAVIS_COMMIT::7}
+    - GIT_COMMIT=${TRAVIS_COMMIT::7}
+    - GIT_BRANCH=$TRAVIS_BRANCH
     - CLIENT_REPO=$DOCKER_USERNAME/fibonacci-calculator-client
     - SERVER_REPO=$DOCKER_USERNAME/fibonacci-calculator-server
     - WORKER_REPO=$DOCKER_USERNAME/fibonacci-calculator-worker
     - NGINX_REPO=$DOCKER_USERNAME/fibonacci-calculator-nginx
+    - CLOUDSDK_CORE_DISABLE_PROMPTS=1
 
 before_install:
+  - openssl aes-256-cbc -K $encrypted_480ce5866b70_key -iv $encrypted_480ce5866b70_iv
+    -in service-account.json.enc -out service-account.json -d
+  - curl https://sdk.cloud.google.com | bash > /dev/null;
+  - source $HOME/google-cloud-sdk/path.bash.inc
+  - gcloud components update kubectl
+  - gcloud auth activate-service-account --key-file=service-account.json
+  - gcloud config set project universal-team-241804
+  - gcloud config set compute/zone asia-southeast1-a
+  - gcloud container clusters get-credentials fibonacci-calculator-cluster
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   - docker build -t $CLIENT_REPO-test -f ./client/Dockerfile.dev ./client
 
 script:
   - docker run $CLIENT_REPO-test npm run test -- --coverage
 
-after_success:
-  - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi`
-  - export VERSION=$TRAVIS_BRANCH-$COMMIT-$TRAVIS_BUILD_NUMBER
-  - export ZIP=$VERSION.zip
-  - docker build -t $CLIENT_REPO:$COMMIT -t $CLIENT_REPO:$TAG ./client
-  - docker build -t $SERVER_REPO:$COMMIT -t $SERVER_REPO:$TAG ./server
-  - docker build -t $WORKER_REPO:$COMMIT -t $WORKER_REPO:$TAG ./worker
-  - docker build -t $NGINX_REPO:$COMMIT -t $NGINX_REPO:$TAG ./nginx
-  # Login to Docker Hub
-  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-  # Push images to Docker Hub
-  - docker push $CLIENT_REPO
-  - docker push $SERVER_REPO
-  - docker push $WORKER_REPO
-  - docker push $NGINX_REPO
-  # Replace the <TAG> with the real version number
-  - sed -i='' "s/<TAG>/$COMMIT/" Dockerrun.aws.json
-  # Zip up the Dockerrun file (feel free to zip up an .ebextensions directory with it)
-  - zip -r $ZIP Dockerrun.aws.json .ebextensions
-
 deploy:
-  provider: elasticbeanstalk
-  region: $AWS_REGION
-  app: fibonacci-calculator
-  env: FibonacciCalculator
-  bucket_name: "elasticbeanstalk-$AWS_REGION-$AWS_ACCOUNT_ID"
-  bucket_path: "fibonacci-calculator"
+  provider: script
+  script: bash ./deploy.sh
   on:
     branch: master
-  access_key_id: $AWS_ACCESS_KEY_ID
-  secret_access_key:
-    secure: "$AWS_SECRET_ACCESS_KEY"
-  zip_file: $ZIP
-  skip_cleanup: true
