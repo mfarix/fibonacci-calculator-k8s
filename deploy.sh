@@ -10,6 +10,6 @@ docker push $WORKER_REPO
 
 kubectl apply -f k8s
 
-kubectl set image deployments/worker-deployment server=$WORKER_REPO:$GIT_COMMIT
+kubectl set image deployments/worker-deployment worker=$WORKER_REPO:$GIT_COMMIT
 kubectl set image deployments/server-deployment server=$SERVER_REPO:$GIT_COMMIT
-kubectl set image deployments/client-deployment server=$CLIENT_REPO:$GIT_COMMIT
+kubectl set image deployments/client-deployment client=$CLIENT_REPO:$GIT_COMMIT
