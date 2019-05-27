@@ -1,0 +1,18 @@
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: Certificate
+metadata:
+  name: fibonaccicalculator-fariz-io-tls
+spec:
+  secretName: fibonaccicalculator-fariz-io
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: fibonaccicalculator.fariz.io
+  dnsNames:
+    - fibonaccicalculator.fariz.io
+  acme:
+    config:
+      - http01:
+          ingressClass: nginx
+        domains:
+          - fibonaccicalculator.fariz.io
