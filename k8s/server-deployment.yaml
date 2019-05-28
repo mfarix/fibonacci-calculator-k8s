@@ -35,3 +35,8 @@ spec:
                 secretKeyRef:
                   name: pgpassword
                   key: PGPASSWORD
+          resources:
+            limits:
+              cpu: 100m
+            requests:
+              cpu: 50m

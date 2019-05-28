@@ -17,3 +17,8 @@ spec:
           image: mfarix/fibonacci-calculator-client
           ports:
             - containerPort: 3000
+          resources:
+            limits:
+              cpu: 100m
+            requests:
+              cpu: 50m

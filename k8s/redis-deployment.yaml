@@ -17,3 +17,8 @@ spec:
           image: redis:5.0.3
           ports:
             - containerPort: 6379
+          resources:
+            limits:
+              cpu: 100m
+            requests:
+              cpu: 50m
