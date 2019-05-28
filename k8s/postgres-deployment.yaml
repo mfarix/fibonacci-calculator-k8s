@@ -33,6 +33,6 @@ spec:
                   key: PGPASSWORD
           resources:
             limits:
-              cpu: 500m
+              cpu: 100m
             requests:
-              cpu: 500m
+              cpu: 50m
